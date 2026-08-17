@@ -52,7 +52,7 @@ function schedulerCapturing() {
 
 function ctxWithDecision(selected) {
   return {
-    agents: { get: () => undefined },
+    agents: { get: () => ({ id: 'root' }) },
     get(name) {
       if (name !== 'userQuestions') return undefined
       return {

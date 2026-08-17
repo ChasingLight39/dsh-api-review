@@ -63,7 +63,7 @@ test('blocking review allows when user chooses allow', async () => {
     }),
   }
   const fakeCtx = {
-    agents: { get: () => undefined },
+    agents: { get: () => ({ id: 'root2' }) },
     get: (name) => (name === 'userQuestions' ? interaction : undefined),
   }
   const fakeScheduler = {
@@ -96,7 +96,7 @@ test('blocking review freezes when user chooses deny', async () => {
     }),
   }
   const fakeCtx = {
-    agents: { get: () => undefined },
+    agents: { get: () => ({ id: 'root3' }) },
     get: (name) => (name === 'userQuestions' ? interaction : undefined),
   }
   const fakeScheduler = {
@@ -258,7 +258,7 @@ test('reviewBlockingExternal allows when user allows a blocked system', async ()
     }),
   }
   const fakeCtx = {
-    agents: { get: () => undefined },
+    agents: { get: () => ({ id: 'root10' }) },
     get: (name) => (name === 'userQuestions' ? interaction : undefined),
   }
   const engine = new ReviewEngine(config, audit, {
@@ -453,7 +453,7 @@ test('reviewBlocking returns deny when prior pending blocks are denied', async (
     }),
   }
   const fakeCtx = {
-    agents: { get: () => undefined },
+    agents: { get: () => ({ id: 'root18' }) },
     get: (name) => (name === 'userQuestions' ? interaction : undefined),
   }
   const engine = new ReviewEngine(config, audit, {
@@ -492,7 +492,7 @@ test('reviewBlockingExternal returns deny when prior pending blocks are denied',
     }),
   }
   const fakeCtx = {
-    agents: { get: () => undefined },
+    agents: { get: () => ({ id: 'root19' }) },
     get: (name) => (name === 'userQuestions' ? interaction : undefined),
   }
   const engine = new ReviewEngine(config, audit, {

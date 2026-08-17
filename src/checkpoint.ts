@@ -143,7 +143,18 @@ export async function settleCheckpoint(
 
     // Ask the root user, not a child agent. A child agent cannot answer human
     // questions, and asking it would fail-closed and freeze the whole root.
-    const rootAgent = ctx.agents.get(state.rootSessionId as SessionId) ?? agent
+    const rootAgent = ctx.agents.get(state.rootSessionId as SessionId)
+    if (rootAgent === undefined) {
+      await audit.log({
+        time: Date.now(),
+        rootSessionId: state.rootSessionId,
+        agentId: agent.id,
+        action: 'checkpoint',
+        reason: 'root agent is not live; cannot ask user, using noUserAction fallback',
+      })
+      ctx.logger?.warn('[dsh-api-review] root agent is not live; cannot ask user')
+      return config.noUserAction
+    }
     const decision = await askCheckpointUser(ctx, rootAgent, stateSnapshot.blocks, signal, config.noUserAction, audit)
 
     await withRootLock(state.rootSessionId, () => {
