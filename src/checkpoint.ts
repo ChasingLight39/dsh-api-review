@@ -61,9 +61,20 @@ async function askCheckpointUser(
   blocks: PendingBlock[],
   signal: AbortSignal | undefined,
   fallback: CheckpointDecision,
+  audit: AuditLogger,
 ): Promise<CheckpointDecision> {
   const interaction = ctx.get('userQuestions')
-  if (interaction === undefined) return fallback
+  if (interaction === undefined) {
+    await audit.log({
+      time: Date.now(),
+      rootSessionId: agent.id,
+      agentId: agent.id,
+      action: 'checkpoint',
+      reason: 'userQuestions channel is not available; using fallback',
+    })
+    ctx.logger?.warn('[dsh-api-review] userQuestions channel is not available; using fallback')
+    return fallback
+  }
 
   let answer
   try {
@@ -81,6 +92,19 @@ async function askCheckpointUser(
       signal,
     })
   } catch (cause) {
+    const reason = cause instanceof UserQuestionError
+      ? `${cause.code}: ${cause.message}`
+      : cause instanceof Error
+        ? cause.message
+        : String(cause)
+    await audit.log({
+      time: Date.now(),
+      rootSessionId: agent.id,
+      agentId: agent.id,
+      action: 'checkpoint',
+      reason: `userQuestions.ask failed: ${reason}`,
+    })
+    ctx.logger?.warn(`[dsh-api-review] userQuestions.ask failed: ${reason}`)
     if (cause instanceof UserQuestionError && cause.code === 'ASK_CANCELLED') {
       return 'deny'
     }
@@ -120,7 +144,7 @@ export async function settleCheckpoint(
     // Ask the root user, not a child agent. A child agent cannot answer human
     // questions, and asking it would fail-closed and freeze the whole root.
     const rootAgent = ctx.agents.get(state.rootSessionId as SessionId) ?? agent
-    const decision = await askCheckpointUser(ctx, rootAgent, stateSnapshot.blocks, signal, config.noUserAction)
+    const decision = await askCheckpointUser(ctx, rootAgent, stateSnapshot.blocks, signal, config.noUserAction, audit)
 
     await withRootLock(state.rootSessionId, () => {
       if (decision === 'allow') {
